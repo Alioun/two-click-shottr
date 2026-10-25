@@ -8,7 +8,7 @@ if [[ ! "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
 fi
 tag="v$version"
 releases=$(gh api --paginate "repos/$GITHUB_REPOSITORY/releases" --jq '.[].tag_name')
-if printf '%s\n' "$releases" | rg --fixed-strings --line-regexp "$tag"; then
+if printf '%s\n' "$releases" | /usr/bin/grep -F -x -q "$tag"; then
     printf '%s already released; keeping its assets unchanged.\n' "$tag"
     exit 0
 fi

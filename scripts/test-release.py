@@ -39,7 +39,7 @@ else
 fi
 ''')
         gh.chmod(0o755)
-        self.env = dict(os.environ, PATH=str(self.root / "bin") + ":" + os.environ["PATH"],
+        self.env = dict(os.environ, PATH=str(self.root / "bin") + ":/usr/bin:/bin:/usr/sbin:/sbin",
                         GITHUB_REPOSITORY="example/app", GITHUB_SHA="fixture-commit",
                         CALL_LOG=str(self.root / "call"), NOTES_LOG=str(self.root / "notes"))
 
