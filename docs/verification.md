@@ -45,3 +45,9 @@ python3 scripts/profile-resources.py BASELINE.app CANDIDATE.app --output .build/
 ```
 
 Keep raw reports and report failed workloads. Peak resident memory is a process lifetime high-water mark, not memory allocated by one phase. Do not attach captures or raw workstation diagnostics publicly without inspecting them.
+
+## Appearance and hidden-icon recovery
+
+`./scripts/check.sh` runs the two native Settings-window tests in a separate test process. They activate and close AppKit windows, so they must not share the other tests' application lifecycle. They do not request screen capture access. The appearance tests cover saved values, numeric bounds, all four quadrants at screen edges, font changes in reused overlays, native control actions, and reopening Settings with a saved hidden-icon preference.
+
+For a visible check, open Settings, change each slider and position, then start a capture without moving the pointer. Confirm that the custom cursor appears immediately. Cancel, hide the menu icon, and confirm the shortcut still starts capture. Reopen the app from Finder or Spotlight and restore the icon. Confirm the preferences survive a relaunch. A locked desktop cannot verify visible cursor activation.

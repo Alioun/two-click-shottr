@@ -16,6 +16,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private let launchMode = LaunchMode()
     private var activity = Activity.idle
     private var statusItem: NSStatusItem?
+    private lazy var preferences = CapturePreferences(defaults: defaults)
+    private var settingsController: AppearanceSettingsController?
     private var modeItems: [NSMenuItem] = []
     private var captureItem: NSMenuItem?
     private var shortcutStatusItem: NSMenuItem?
@@ -26,12 +28,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var permissionTask: Task<Void, Never>?
     private var permissionItem: NSMenuItem?
     private var captureStatusItem: NSMenuItem?
-    private lazy var selectionController = SelectionController(mode: mode, reuseWindows: true) {
+    private lazy var selectionController = SelectionController(
+        mode: mode, reuseWindows: true, preferences: preferences
+    ) {
         [weak self] rect in
         self?.finishSelection(rect)
     }
     private var isShuttingDown = false
-    private let defaults = UserDefaults.standard
+    private let defaults: UserDefaults
+
+    init(defaults: UserDefaults = .standard) {
+        self.defaults = defaults
+        super.init()
+    }
     private lazy var shortcutController = CaptureShortcutController(
         defaults: defaults,
         register: { [weak self] shortcut in
@@ -86,6 +95,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         globalHotKey.install()
         shortcutController.activate()
         updateShortcutItems()
+        if !preferences.showInMenuBar { showSettings() }
     }
 
     private func configureMenu() {
@@ -117,6 +127,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let modeMenu = NSMenuItem(title: "Selection mode", action: nil, keyEquivalent: "")
         modeMenu.submenu = modes
         menu.addItem(modeMenu)
+        let settings = NSMenuItem(title: "Settings…", action: #selector(showSettings), keyEquivalent: ",")
+        settings.target = self
+        menu.addItem(settings)
         let captureStatus = NSMenuItem(title: "", action: nil, keyEquivalent: "")
         captureStatus.isEnabled = false
         captureStatus.isHidden = true
@@ -134,7 +147,48 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         menu.addItem(quit)
         item.menu = menu
         statusItem = item
+        item.isVisible = preferences.showInMenuBar
         updateModeItems()
+    }
+
+    @objc private func showSettings() {
+        guard NSApp.modalWindow == nil else { return }
+        if case .selecting = activity { selectionController.receive(.cancel) }
+        if settingsController == nil {
+            settingsController = AppearanceSettingsController(
+                preferences: preferences,
+                onChange: { [weak self] preferences in
+                    guard let self else { return }
+                    self.preferences = preferences
+                    preferences.save(to: self.defaults)
+                    self.selectionController.apply(preferences)
+                    self.statusItem?.isVisible = preferences.showInMenuBar
+                }, changeShortcut: { [weak self] in self?.changeShortcut() },
+                permissionHelp: { [weak self] in self?.permissionHelp() })
+        }
+        updateSettingsStatus()
+        activateCompanion()
+        settingsController?.showWindow(nil)
+        settingsController?.window?.makeKeyAndOrderFront(nil)
+    }
+
+    func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
+        if launchMode == .application { showSettings() }
+        return false
+    }
+
+    private func updateSettingsStatus() {
+        let message: String
+        if screenCaptureAccess.cached == false {
+            message = "Screen Recording access is required. Open System Settings to allow it."
+        } else if let error = shortcutController.registrationError {
+            message = error
+        } else if captureStatusItem?.isHidden == false {
+            message = captureStatusItem?.toolTip ?? "Capture failed. Try again."
+        } else {
+            message = ""
+        }
+        settingsController?.updateStatus(message)
     }
 
     private func updateShortcutItems() {
@@ -144,6 +198,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         shortcutStatusItem?.title = "Shortcut unavailable (\(shortcut.displayText))"
         shortcutStatusItem?.toolTip = shortcutController.registrationError
         shortcutStatusItem?.isHidden = shortcutController.registrationError == nil
+        updateSettingsStatus()
     }
 
     @objc private func changeShortcut() {
@@ -189,6 +244,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         permissionItem?.title =
             screenCaptureAccess.cached == false
             ? "Screen recording permission required…" : "Screen recording permission…"
+        updateSettingsStatus()
     }
 
     @objc private func beginCapture() {
@@ -196,6 +252,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         if launchMode == .triggerLatency, screenCaptureAccess.cached != true { return }
         guard case .idle = activity, NSApp.modalWindow == nil else { return }
         captureStatusItem?.isHidden = true
+        updateSettingsStatus()
         switch screenCaptureAccess.cached {
         case true?: startSelection()
         case false?: requestPermission()
@@ -278,6 +335,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 captureStatusItem?.title = "Capture failed. Try again."
                 captureStatusItem?.toolTip = failure.localizedDescription
                 captureStatusItem?.isHidden = false
+                updateSettingsStatus()
                 Logger(subsystem: AppIdentity.bundleIdentifier, category: "capture")
                     .error("\(failure.localizedDescription, privacy: .public)")
             } catch {

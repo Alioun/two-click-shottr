@@ -8,6 +8,8 @@
 | `AppIdentity.swift` | Stable application identifiers and shared capture-file destination creation |
 | `Selection/Selection.swift` | Pure two-click and drag state transitions, normalized rectangles, AppKit-to-capture conversion |
 | `Selection/Overlay.swift` | Prepared reusable windows, shared input routing, shape layers, coordinates, cursor and cancellation observers |
+| `Settings/CapturePreferences.swift` | UserDefaults values, supported ranges, quadrant layout, native cursor creation |
+| `Settings/AppearanceSettingsController.swift` | Native Settings window, AppKit controls, live preview, change callbacks |
 | `Shortcuts/CaptureShortcut.swift` | Shortcut value, modifier mapping, persistence, recorder, registration transaction and rollback |
 | `Shortcuts/GlobalHotKey.swift` | One Carbon handler, one registration, event identity, exclusive registration, explicit cleanup |
 | `Capture/Capture.swift` | Availability routing, filtered screenshots, macOS 13 compatibility capture, PNG encoding, async Shottr handoff |
@@ -24,3 +26,7 @@ Selection geometry stays in global AppKit points until one conversion at the cap
 `ProcessRunner` is intentionally more than an async wrapper around Foundation `Process`. It must bound stderr and deadlines, avoid waiting for inherited pipes to reach EOF, escalate beyond SIGTERM when needed, and reap the direct child. Normal cancellation signals without joining on AppKit's thread. Termination waits on a worker before replying to AppKit.
 
 The setup scripts share signing, input, and installed-report helpers. `swift.sh` centralizes package build flags. `repository.py` supplies the same candidate file set to source validation and source packaging. The local signing wizard remains person-driven.
+
+Appearance is a value loaded once from `UserDefaults` and saved when the user changes a control. `SelectionController` retains the prepared cursor. A size or thickness change replaces it; ordinary pointer movement only sets it. The `NSImage` drawing handler lets AppKit render for the destination resolution. Coordinates are a native two-line `NSTextField`. Font changes remeasure it, and quadrant layout flips at edges before clamping to the screen.
+
+The app retains its `NSStatusItem` when hiding it and uses `isVisible` to restore it. Hiding never unregisters the global shortcut. AppKit reopen events show the retained Settings window. This also provides recovery when the menu icon is hidden.

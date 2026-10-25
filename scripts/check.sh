@@ -6,5 +6,7 @@ xcrun swift-format lint --strict --recursive Sources Tests
 for script in scripts/*.sh scripts/*.command; do bash -n "$script"; done
 python3 scripts/test-script-regressions.py
 python3 scripts/test-release.py
-./scripts/swift.sh test --disable-xctest --enable-swift-testing
+# AppKit lifecycle tests activate and close native windows in a separate process.
+./scripts/swift.sh test --disable-xctest --enable-swift-testing --skip AppearanceSettingsTests
+./scripts/swift.sh test --disable-xctest --enable-swift-testing --filter AppearanceSettingsTests
 ./scripts/swift.sh build -c release

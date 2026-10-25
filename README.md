@@ -50,6 +50,14 @@ A single-display image keeps that display's native resolution. A selection spann
 
 Images remain in `~/Library/Caches/local.two-click-shottr/Captures`. The companion never deletes them or uploads them. Cache-cleaning tools may remove them, so save images elsewhere for long-term storage. Shottr handles any actions you take after opening the image.
 
+## Appearance and menu bar
+
+Open **Settings…** from the menu to change the crosshair size and line thickness, coordinate text size, or coordinate position. The four positions are upper right, upper left, lower left, and lower right of the cursor. Near a screen edge, the coordinates move to the other side and stay inside the screen. The preview updates as you change the controls. Settings save automatically.
+
+Turn off **Show in menu bar** to hide the icon. The capture shortcut keeps working. Reopen Two Click Shottr from Finder or Spotlight to open Settings and restore the icon. Settings also includes shortcut, Screen Recording, and Quit buttons.
+
+These controls use AppKit. The crosshair uses `NSCursor` with a resolution-aware `NSImage` drawn by `NSBezierPath`. The coordinates use `NSTextField` and the system monospaced font. The app keeps its cursor ready between captures and does no cursor drawing on mouse movement.
+
 ## Development
 
 ```sh

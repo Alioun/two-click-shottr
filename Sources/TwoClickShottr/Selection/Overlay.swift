@@ -29,33 +29,13 @@ final class SelectionWindow: NSWindow {
 }
 
 @MainActor
-private final class CoordinateView: NSView {
-    static let attributes: [NSAttributedString.Key: Any] = {
-        let shadow = NSShadow()
-        shadow.shadowColor = NSColor.black
-        shadow.shadowBlurRadius = 2
-        shadow.shadowOffset = NSSize(width: 0, height: -1)
-        return [
-            .font: NSFont.monospacedSystemFont(ofSize: 11, weight: .medium),
-            .foregroundColor: NSColor.white, .shadow: shadow,
-        ]
-    }()
-    var text = "" {
-        didSet { if text != oldValue { needsDisplay = true } }
-    }
-
-    override func hitTest(_ point: NSPoint) -> NSView? { nil }
-    override func draw(_ dirtyRect: NSRect) {
-        (text as NSString).draw(at: CGPoint(x: 4, y: 4), withAttributes: Self.attributes)
-    }
-}
-
-@MainActor
 final class SelectionView: NSView {
     weak var selection: SelectionController?
     private let shade = CAShapeLayer()
     private let outline = CAShapeLayer()
-    private let coordinates = CoordinateView(frame: .zero)
+    private let coordinates = NSTextField(wrappingLabelWithString: "")
+    private var coordinateAttributes: [NSAttributedString.Key: Any] = [:]
+    private var coordinateFontSize: Double?
     override var acceptsFirstResponder: Bool { true }
     override var wantsUpdateLayer: Bool { true }
     override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
@@ -70,14 +50,19 @@ final class SelectionView: NSView {
         outline.lineWidth = 1
         layer?.addSublayer(shade)
         layer?.addSublayer(outline)
+        coordinates.isSelectable = false
+        coordinates.isEditable = false
+        coordinates.isBordered = false
+        coordinates.drawsBackground = false
+        coordinates.lineBreakMode = .byClipping
+        coordinates.maximumNumberOfLines = 2
         addSubview(coordinates)
     }
 
     required init?(coder: NSCoder) { nil }
 
     static func prewarm() {
-        _ = ("0\n0" as NSString).size(withAttributes: CoordinateView.attributes)
-        _ = NSCursor.crosshair.image
+        _ = NSFont.monospacedSystemFont(ofSize: 11, weight: .medium)
     }
 
     override func mouseDown(with event: NSEvent) { selection?.receive(.down(globalPoint(event))) }
@@ -87,7 +72,7 @@ final class SelectionView: NSView {
     override func cancelOperation(_ sender: Any?) { selection?.receive(.cancel) }
 
     private func globalPoint(_ event: NSEvent) -> CGPoint {
-        if window?.isVisible == true { NSCursor.crosshair.set() }
+        if window?.isVisible == true { selection?.cursor.set() }
         return window!.convertPoint(toScreen: event.locationInWindow)
     }
 
@@ -126,16 +111,30 @@ final class SelectionView: NSView {
         let point = convert(window.convertPoint(fromScreen: selection.pointer), from: nil)
         coordinates.isHidden = !bounds.contains(point)
         guard !coordinates.isHidden else { return }
+        let fontChanged = coordinateFontSize != selection.preferences.coordinateFontSize
+        if fontChanged {
+            coordinateFontSize = selection.preferences.coordinateFontSize
+            let shadow = NSShadow()
+            shadow.shadowColor = .black
+            shadow.shadowBlurRadius = 2
+            shadow.shadowOffset = NSSize(width: 0, height: -1)
+            coordinateAttributes = [
+                .font: NSFont.monospacedSystemFont(
+                    ofSize: selection.preferences.coordinateFontSize, weight: .medium),
+                .foregroundColor: NSColor.white, .shadow: shadow,
+            ]
+        }
         let text =
             "\(Int(floor(selection.pointer.x)))\n\(Int(floor(selection.primaryTop - selection.pointer.y)))"
-        let size = (text as NSString).size(withAttributes: CoordinateView.attributes)
-        var origin = CGPoint(x: point.x + 12, y: point.y + 8)
-        if origin.x + size.width > bounds.maxX - 4 { origin.x = point.x - size.width - 12 }
-        if origin.y + size.height > bounds.maxY - 4 { origin.y = point.y - size.height - 8 }
-        origin.x = max(bounds.minX + 4, min(origin.x, bounds.maxX - size.width - 4))
-        origin.y = max(bounds.minY + 4, min(origin.y, bounds.maxY - size.height - 4))
-        coordinates.frame = CGRect(origin: origin, size: size).insetBy(dx: -4, dy: -4)
-        coordinates.text = text
+        if coordinates.stringValue != text || fontChanged {
+            coordinates.attributedStringValue = NSAttributedString(
+                string: text, attributes: coordinateAttributes)
+            coordinates.sizeToFit()
+        }
+        coordinates.frame = selection.preferences.coordinatePosition.frame(
+            at: point, size: coordinates.frame.size, in: bounds.insetBy(dx: 4, dy: 4),
+            gap: selection.cursor.image.size.width / 2 + 4)
+
     }
 }
 
@@ -147,6 +146,8 @@ final class SelectionController {
     private(set) var primaryTop: CGFloat = 0
     private(set) var displayBounds: [CGDirectDisplayID: CGRect] = [:]
     private(set) var mode: SelectionMode
+    private(set) var preferences: CapturePreferences
+    private(set) var cursor: NSCursor
     private let reuseWindows: Bool
     private var preparedWindows: [SelectionWindow] = []
     private var preparedDisplayIDs: [CGDirectDisplayID] = []
@@ -155,10 +156,28 @@ final class SelectionController {
     private var deactivationObserver: NSObjectProtocol?
     private var cursorObserver: NSObjectProtocol?
 
-    init(mode: SelectionMode, reuseWindows: Bool = false, completion: @escaping (CGRect?) -> Void) {
+    init(
+        mode: SelectionMode, reuseWindows: Bool = false,
+        preferences: CapturePreferences = CapturePreferences(), completion: @escaping (CGRect?) -> Void
+    ) {
         self.mode = mode
+        self.preferences = preferences
+        self.cursor = preferences.makeCursor()
         self.reuseWindows = reuseWindows
         self.completion = completion
+    }
+
+    func apply(_ preferences: CapturePreferences) {
+        if preferences.crosshairSize != self.preferences.crosshairSize
+            || preferences.lineWidth != self.preferences.lineWidth
+        {
+            cursor = preferences.makeCursor()
+        }
+        self.preferences = preferences
+        for window in windows {
+            (window.contentView as? SelectionView)?.updateOverlay()
+        }
+        refreshCursor()
     }
 
     func prepare(frames: [CGRect] = NSScreen.screens.map(\.frame)) {
@@ -211,7 +230,7 @@ final class SelectionController {
         state = .waiting
         pointer = NSEvent.mouseLocation
         primaryTop = NSScreen.screens.first?.frame.maxY ?? 0
-        if visible { NSCursor.crosshair.set() }
+        if visible { cursor.set() }
         prepare(frames: frames)
         windows = preparedWindows
         preparedWindows.removeAll(keepingCapacity: true)
@@ -247,7 +266,7 @@ final class SelectionController {
 
     private func refreshCursor() {
         guard NSApp.isActive, windows.contains(where: { $0.isVisible }) else { return }
-        NSCursor.crosshair.set()
+        cursor.set()
     }
 
     func receive(_ event: SelectionEvent) {

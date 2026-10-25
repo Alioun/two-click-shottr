@@ -28,8 +28,8 @@ enum Verification {
         let started = ProcessInfo.processInfo.systemUptime
         selection.start()
         let startReturned = ProcessInfo.processInfo.systemUptime
-        let presentOnReturn = CursorProbe().matchesCrosshair
-        let probe = await CursorProbe.waitForCrosshair()
+        let presentOnReturn = CursorProbe(expected: selection.cursor).matchesCrosshair
+        let probe = await CursorProbe.waitForCursor(selection.cursor)
         let observed = ProcessInfo.processInfo.systemUptime
         let active = probe.applicationActive
         let unchangedPointer = NSEvent.mouseLocation == initialPointer

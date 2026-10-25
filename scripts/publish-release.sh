@@ -21,6 +21,8 @@ Experimental universal app for Apple Silicon and Intel Macs, requiring macOS 13 
 
 Download the universal-experimental ZIP, extract it, and move Two Click Shottr.app to Applications. Release Shift-Command-4 in Shottr and macOS screenshot shortcuts before using it here. Grant Screen Recording access when requested.
 
+Open Settings from the menu to change crosshair size and line thickness, coordinate text size and position, or menu-bar visibility. If you hide the icon, reopen the app from Finder or Spotlight to reach Settings. The capture shortcut keeps working.
+
 This build is ad-hoc signed and is not Apple-notarized. macOS may block it with Gatekeeper. Use Apple's documented security override only if you trust this download, or build from source with your own stable signing identity. Updates may require granting Screen Recording access again. No automatic updater is included.
 
 The SHA-256 file verifies download integrity. It does not replace Developer ID signing or notarization. Shottr is not included.

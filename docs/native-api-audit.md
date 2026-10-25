@@ -131,6 +131,7 @@ Checked declarations: `init`, `install`, `register`, `register`, `unregister`, `
 | `build.sh` | Top-level entrypoint | Native Swift compiler and codesign; staged, verified local bundle construction. |
 | `check-source.py` | Top-level entrypoint | Shared repository validator; no second file-discovery implementation. |
 | `check.sh` | Top-level entrypoint | Native formatter, Bash parser, and existing test entrypoints. No app or permission interaction. |
+| `package-experimental.sh`, `publish-release.sh` | Top-level entrypoints | Native universal Swift build, lipo, otool, codesign, ditto and shasum; GitHub CLI publishes a new version after CI. |
 | `profile-resources.py` | `run`, `main` | Standard-library subprocess, JSON, time, statistics, and argparse; visible workload sequencing and metric aggregation are diagnostic policy. |
 | `repair-input.sh` | `repair_read`, `repair_confirm`, `repair_pause` | Bash read/printf with terminal and EOF checks. The confirmation gate is app setup policy. |
 | `repair-permission.command` | `stage`, `say`, `warn`, `run_wizard` | Native openssl, security, codesign, open, tccutil and filesystem tools; app-specific human-driven stages. The unrelated copied wizard library was removed. |
@@ -142,7 +143,7 @@ Checked declarations: `init`, `install`, `register`, `register`, `unregister`, `
 | `verification-support.sh` | `report_boolean`, `wait_for_report`, `launch_installed_report` | Native plutil JSON extraction and LaunchServices open; complete-report polling and distinct exit statuses remain protocol logic. |
 | `verify-installed.sh` | `usage` | Argument handling and orchestration through shared report helpers. No direct-executable permission attribution assumption. |
 
-The application inventory contains 108 explicit function/initializer declarations. Computed properties covered above include selection previews and titles, shortcut validation/labels/menu flags, cursor matching, backend naming, capture failure presentation, fixture dimensions, process identity, and native responder/drawing overrides.
+The initial cleanup inventory contained 108 explicit function/initializer declarations. The later appearance settings are documented in [appearance settings](appearance.md). Computed properties covered above include selection previews and titles, shortcut validation/labels/menu flags, cursor matching, backend naming, capture failure presentation, fixture dimensions, process identity, and native responder/drawing overrides.
 
 ## Retained limits
 

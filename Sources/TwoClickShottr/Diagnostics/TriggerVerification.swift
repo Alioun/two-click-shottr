@@ -12,7 +12,7 @@ extension Verification {
         let started = ProcessInfo.processInfo.systemUptime
         let delivery = trigger()
         let returned = ProcessInfo.processInfo.systemUptime
-        let probe = await CursorProbe.waitForCrosshair()
+        let probe = await CursorProbe.waitForCursor(selection.cursor)
         let observed = ProcessInfo.processInfo.systemUptime
         let unchangedPointer = NSEvent.mouseLocation == initialPointer
         let matches = probe.matchesCrosshair

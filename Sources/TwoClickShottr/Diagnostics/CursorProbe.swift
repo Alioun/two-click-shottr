@@ -4,19 +4,19 @@ import AppKit
 struct CursorProbe {
     let cursor = NSCursor.currentSystem
     let applicationActive = NSApp.isActive
-    private static let crosshair = NSCursor.crosshair
+    let expected: NSCursor
 
     var matchesCrosshair: Bool {
-        cursor?.hotSpot == Self.crosshair.hotSpot
-            && cursor?.image.tiffRepresentation == Self.crosshair.image.tiffRepresentation
+        cursor?.hotSpot == expected.hotSpot
+            && cursor?.image.tiffRepresentation == expected.image.tiffRepresentation
     }
 
-    static func waitForCrosshair() async -> CursorProbe {
+    static func waitForCursor(_ expected: NSCursor) async -> CursorProbe {
         for _ in 0..<1000 {
-            let sample = CursorProbe()
+            let sample = CursorProbe(expected: expected)
             if sample.applicationActive && sample.matchesCrosshair { return sample }
             try? await Task.sleep(nanoseconds: 1_000_000)
         }
-        return CursorProbe()
+        return CursorProbe(expected: expected)
     }
 }
