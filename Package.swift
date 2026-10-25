@@ -1,0 +1,12 @@
+// swift-tools-version: 5.9
+import PackageDescription
+
+let package = Package(
+    name: "TwoClickShottr",
+    platforms: [.macOS(.v13)],
+    products: [.executable(name: "TwoClickShottr", targets: ["TwoClickShottr"])],
+    targets: [
+        .executableTarget(name: "TwoClickShottr"),
+        .testTarget(name: "TwoClickShottrTests", dependencies: ["TwoClickShottr"])
+    ]
+)

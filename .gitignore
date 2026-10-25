@@ -1,0 +1,13 @@
+.build/
+dist/
+.DS_Store
+.audit/
+__pycache__/
+*.pyc
+.env
+.env.*
+*.pem
+*.key
+*.p12
+*.pfx
+*.mobileprovision

@@ -1,0 +1,47 @@
+name: Build and release
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  check:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Test source, scripts, and release compilation
+        run: ./scripts/check.sh
+  package:
+    needs: check
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build universal experimental app
+        run: ./scripts/package-experimental.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: universal-experimental-app
+          path: |
+            dist/*.zip
+            dist/*.sha256
+          if-no-files-found: error
+  release:
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    needs: package
+    runs-on: macos-15
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: universal-experimental-app
+          path: dist
+      - name: Publish new app version
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: ./scripts/publish-release.sh
