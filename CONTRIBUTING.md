@@ -11,3 +11,15 @@ Preserve macOS 13 availability guards. Do not replace the macOS 14+ filtered scr
 The command-line verifiers are development tools. They do not establish physical input delivery, permission continuity after an update, or behavior on display configurations that were not tested. Inspect diagnostic JSON and captures before attaching them publicly; reports can contain executable paths and display geometry.
 
 Keep signing keys, certificates, build outputs, and workstation-specific research outside the source release. `scripts/check-source.py` checks for local paths and signing material in publishable files. It does not audit Git history or establish the absence of every possible credential.
+
+## Commit messages
+
+Use [Conventional Commits](https://www.conventionalcommits.org/) with a scope: `type(scope): message`. Use `feat` for features, `fix` for bug fixes, `docs` for documentation, `test` for tests, `refactor` for behavior-preserving changes, `ci` for CI changes, `build` for build tooling, `perf` for performance changes, and `chore` for other maintenance. Choose a scope that names the affected area, such as `capture`, `cursor`, `settings`, `packaging`, or `contributing`. Write a short imperative message. This convention applies to new commits; keep published history unchanged.
+
+Examples:
+
+```text
+feat(packaging): add DMG downloads alongside ZIP releases
+fix(cursor): compare native images at a shared resolution
+docs(contributing): document commit conventions
+```
