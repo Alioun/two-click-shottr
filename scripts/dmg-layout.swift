@@ -4,7 +4,7 @@ import AppKit
 
 let appName = "Two Click Shottr.app"
 let guideName = "Opening the app.rtf"
-let windowSize = NSSize(width: 560, height: 490)
+let windowSize = NSSize(width: 560, height: 520)
 let iconSize: CGFloat = 128.0
 let iconY: CGFloat = 150.0
 let appX: CGFloat = 150.0
