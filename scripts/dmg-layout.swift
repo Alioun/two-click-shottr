@@ -4,10 +4,10 @@ import AppKit
 
 let appName = "Two Click Shottr.app"
 let windowSize = NSSize(width: 560, height: 340)
-let iconSize = 128.0
-let iconY = 150.0
-let appX = 150.0
-let applicationsX = 410.0
+let iconSize: CGFloat = 128.0
+let iconY: CGFloat = 150.0
+let appX: CGFloat = 150.0
+let applicationsX: CGFloat = 410.0
 let background = ".background/background.tiff"
 
 let arguments = CommandLine.arguments
@@ -50,7 +50,7 @@ func drawBackground() {
             width: windowSize.width, height: captionHeight))
 }
 
-func render(scale: Double) -> NSBitmapImageRep {
+func render(scale: CGFloat) -> NSBitmapImageRep {
     let image = NSBitmapImageRep(
         bitmapDataPlanes: nil, pixelsWide: Int(windowSize.width * scale),
         pixelsHigh: Int(windowSize.height * scale), bitsPerSample: 8, samplesPerPixel: 4,
