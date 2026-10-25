@@ -21,6 +21,8 @@ To release an update:
    shasum -a 256 -c TwoClickShottr-VERSION-universal-experimental.dmg.sha256
    ```
 
+`scripts/create-dmg.sh APP OUTPUT` builds the DMG window. `scripts/dmg-layout.swift` draws the background with AppKit and lays out the icons through Finder AppleScript on a temporary writable image. The window puts the app on the left, an arrow and drag instruction in the middle, and an `Applications` link on the right. The script then converts the image to compressed UDZO. It reads the icon view and icon positions back from Finder on a read-only mount, and it fails instead of shipping an unstyled DMG. Finder must accept Apple events from the build shell; a refusal fails packaging. The readback check covers the icon layout. Open the finished DMG to inspect its background.
+
 For a DMG content check, mount it read-only with `hdiutil attach -nobrowse -readonly IMAGE.dmg`. Verify the app with `codesign --verify --strict --all-architectures "/Volumes/Two Click Shottr/Two Click Shottr.app"`, confirm that `Applications` links to `/Applications`, then detach with `hdiutil detach "/Volumes/Two Click Shottr"`. Use the actual mount path printed by `hdiutil` if that volume name is already in use.
 
 The release tag points to the exact built commit. Version numbers must be unique; reusing a released version does not update its download. GitHub supplies source archives for each tag. The workflow uses the repository's temporary token and requires no private signing credentials. Only the release job has repository write permission. Fork pull requests cannot publish releases.
