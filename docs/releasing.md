@@ -4,7 +4,7 @@ This public repository starts with a clean source snapshot. Its MIT license cove
 
 ## Automated app releases
 
-Every push and pull request runs `scripts/check.sh` on macOS 15, then builds a universal arm64 and x86_64 app with `scripts/package-experimental.sh`. The app deployment target remains macOS 13. CI uploads the ZIP and SHA-256 file as workflow artifacts.
+Every push and pull request runs `scripts/check.sh` on macOS 15, then builds a universal arm64 and x86_64 app with `scripts/package-experimental.sh`. The app deployment target remains macOS 13. CI uploads the ZIP, DMG, and their SHA-256 files as workflow artifacts.
 
 On `main`, a successful build publishes a GitHub Release when `CFBundleShortVersionString` in `Resources/Info.plist` has not been released before. The initial version is 1.1.0. Existing releases and their assets remain unchanged. A manual workflow run can retry a failed publication without changing the version.
 
@@ -13,7 +13,15 @@ To release an update:
 1. Set a new `major.minor.patch` version and increment `CFBundleVersion` in `Resources/Info.plist`.
 2. Run `./scripts/check.sh` and the applicable live checks in [verification](verification.md).
 3. Push the update to `main`. CI must pass before publication.
-4. Check the GitHub Release and download its ZIP. Verify it with `shasum -a 256 -c TwoClickShottr-VERSION-universal-experimental.zip.sha256` from the download directory.
+4. Download the ZIP or DMG and its matching `.sha256` file from the GitHub Release. From the download directory, verify the format you chose:
+
+   ```sh
+   shasum -a 256 -c TwoClickShottr-VERSION-universal-experimental.zip.sha256
+   # For the DMG instead:
+   shasum -a 256 -c TwoClickShottr-VERSION-universal-experimental.dmg.sha256
+   ```
+
+For a DMG content check, mount it read-only with `hdiutil attach -nobrowse -readonly IMAGE.dmg`. Verify the app with `codesign --verify --strict --all-architectures "/Volumes/Two Click Shottr/Two Click Shottr.app"`, confirm that `Applications` links to `/Applications`, then detach with `hdiutil detach "/Volumes/Two Click Shottr"`. Use the actual mount path printed by `hdiutil` if that volume name is already in use.
 
 The release tag points to the exact built commit. Version numbers must be unique; reusing a released version does not update its download. GitHub supplies source archives for each tag. The workflow uses the repository's temporary token and requires no private signing credentials. Only the release job has repository write permission. Fork pull requests cannot publish releases.
 
@@ -21,7 +29,7 @@ The release tag points to the exact built commit. Version numbers must be unique
 
 Downloads are explicitly labeled experimental. They are ad-hoc signed, not Developer ID signed or notarized. Gatekeeper may block them, and updates can invalidate Screen Recording permission. Checksums detect download corruption but do not provide a Developer ID identity. There is no automatic updater.
 
-`./scripts/package-experimental.sh` produces the same universal ZIP locally. It does not install the app or change Keychain or privacy settings. Keep this path separate from `build.sh` and `repair-permission.command`, which use a stable local certificate and reject ad-hoc identities.
+`./scripts/package-experimental.sh` produces the same universal ZIP and DMG locally. It does not install the app or change Keychain or privacy settings. Keep this path separate from `build.sh` and `repair-permission.command`, which use a stable local certificate and reject ad-hoc identities.
 
 Developer ID signing, hardened runtime, notarization, and validation must be configured before offering notarized downloads. See [Apple's notarization documentation](https://developer.apple.com/documentation/security/notarizing-macos-software-before-distribution).
 

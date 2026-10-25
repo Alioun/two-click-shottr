@@ -31,4 +31,5 @@ archive="TwoClickShottr-$version-universal-experimental.zip"
 ditto -c -k --sequesterRsrc --keepParent "$app" "$stage/$archive"
 mv "$stage/$archive" "dist/$archive"
 (cd dist && shasum -a 256 "$archive" > "$archive.sha256")
+./scripts/create-dmg.sh "$app" "dist/TwoClickShottr-$version-universal-experimental.dmg"
 printf 'Packaged dist/%s\n' "$archive"

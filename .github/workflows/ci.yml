@@ -27,6 +27,7 @@ jobs:
           name: universal-experimental-app
           path: |
             dist/*.zip
+            dist/*.dmg
             dist/*.sha256
           if-no-files-found: error
   release:

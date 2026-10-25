@@ -8,7 +8,7 @@ Requires macOS 13 or later and Shottr installed. Native filtered capture is used
 
 ## Download
 
-Download the latest universal app from [GitHub Releases](https://github.com/Alioun/two-click-shottr/releases/latest). Extract the ZIP and move `Two Click Shottr.app` to Applications. The app supports Apple Silicon and Intel Macs.
+Download the latest universal app from [GitHub Releases](https://github.com/Alioun/two-click-shottr/releases/latest). Open the DMG and drag `Two Click Shottr.app` to Applications, or extract the ZIP and move the app there. The app supports Apple Silicon and Intel Macs.
 
 These downloads are experimental, ad-hoc signed, and not Apple-notarized. Gatekeeper may block them. Consult [Apple's instructions for opening an app from an unidentified developer](https://support.apple.com/guide/mac-help/open-a-mac-app-from-an-unknown-developer-mh40616/mac) before deciding whether to allow it. Updates may require granting Screen Recording access again. For a stable local signing identity, use the source setup below. There is no automatic updater.
 

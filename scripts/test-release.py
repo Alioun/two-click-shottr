@@ -23,10 +23,11 @@ class ReleaseTests(unittest.TestCase):
         self.version = subprocess.check_output([
             "/usr/libexec/PlistBuddy", "-c", "Print :CFBundleShortVersionString",
             str(self.root / "Resources/Info.plist")], text=True).strip()
-        archive = f"TwoClickShottr-{self.version}-universal-experimental.zip"
-        (self.root / "dist" / archive).write_bytes(b"fixture")
-        digest = hashlib.sha256(b"fixture").hexdigest()
-        (self.root / "dist" / (archive + ".sha256")).write_text(f"{digest}  {archive}\n")
+        for extension in ("zip", "dmg"):
+            archive = f"TwoClickShottr-{self.version}-universal-experimental.{extension}"
+            (self.root / "dist" / archive).write_bytes(b"fixture")
+            digest = hashlib.sha256(b"fixture").hexdigest()
+            (self.root / "dist" / (archive + ".sha256")).write_text(f"{digest}  {archive}\n")
         gh = self.root / "bin/gh"
         gh.write_text('''#!/bin/bash
 set -eu
@@ -61,11 +62,18 @@ fi
         self.assertEqual(result.returncode, 0, result.stderr)
         args = (self.root / "call").read_text().splitlines()
         self.assertIn("v" + self.version, args)
+        for extension in ("zip", "zip.sha256", "dmg", "dmg.sha256"):
+            self.assertIn(f"dist/TwoClickShottr-{self.version}-universal-experimental.{extension}", args)
         self.assertEqual(args[args.index("--target") + 1], "fixture-commit")
         self.assertIn("not Apple-notarized", (self.root / "notes").read_text())
 
     def test_corrupt_download_does_not_publish(self):
         next((self.root / "dist").glob("*.zip")).write_bytes(b"corrupt")
+        self.assertNotEqual(self.run_release().returncode, 0)
+        self.assertFalse((self.root / "call").exists())
+
+    def test_corrupt_disk_image_does_not_publish(self):
+        next((self.root / "dist").glob("*.dmg")).write_bytes(b"corrupt")
         self.assertNotEqual(self.run_release().returncode, 0)
         self.assertFalse((self.root / "call").exists())
 
